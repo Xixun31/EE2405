@@ -24,10 +24,12 @@ cmake .. -GNinja -DMBED_TARGET=B_L4S5I_IOT01A
 ```
 
 ### 使用 Ninja 進行燒錄
-`sudo ninja flash-MbedCEHelloWorld`
+```sudo ninja flash-MbedCEHelloWorld
+```
 
 ### 序列埠監控與截圖
-`Monitor: sudo microcom --port=/dev/ttyACM0 --speed=115200Exit: Ctrl-\ 然後按 Ctrl-CScreenshot: gnome-screenshot -d 5` (延遲 5 秒後截圖)
+```Monitor: sudo microcom --port=/dev/ttyACM0 --speed=115200Exit: Ctrl-\ 然後按 Ctrl-CScreenshot: gnome-screenshot -d 5 #(延遲 5 秒後截圖)
+```
 
 ## 🍎 macOS 開發流程 (個人電腦)
 
@@ -55,14 +57,18 @@ cmake .. -GNinja -DMBED_TARGET=B_L4S5I_IOT01A
 ```
 
 ### 在 build 資料夾內執行
-`ninja MbedCEHelloWorld`
+```ninja MbedCEHelloWorld
+```
 
 ### 手動燒錄 (Flash)
-`cp MbedCEHelloWorld.bin /Volumes/DIS_L4S5VI/
-sync`
+```cp MbedCEHelloWorld.bin /Volumes/DIS_L4S5VI/
+sync
+```
 
 ### 序列埠監控 (Serial Port) 確認裝置名稱
-`ls /dev/cu.usbmodem*`
+```ls /dev/cu.usbmodem*
+```
 
 ### 使用 minicom 連線 (請根據 ls 結果修改 modem 編號)
-`minicom -D /dev/cu.usbmodem1103 -b 115200`
+```minicom -D /dev/cu.usbmodem1103 -b 115200
+```
