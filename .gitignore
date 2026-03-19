@@ -1,0 +1,20 @@
+# 忽略編譯產生的資料夾（這是體積最大的部分）
+build/
+BUILD/
+cmake-build-debug/
+
+# 忽略燒錄用的二進位檔
+*.bin
+*.hex
+*.elf
+
+# 忽略 Git 嵌套產生的錯誤紀錄（針對你之前的問題）
+.git/
+!/.git
+
+# 忽略 VS Code 產生的設定檔
+.vscode/
+
+# 忽略 macOS 或 Windows 產生的系統垃圾檔
+.DS_Store
+Thumbs.db
