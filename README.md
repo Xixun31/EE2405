@@ -34,7 +34,13 @@ sudo ninja flash-MbedCEHelloWorld
 
 ### 序列埠監控與截圖
 ```
-Monitor: sudo microcom --port=/dev/ttyACM0 --speed=115200Exit: Ctrl-\ 然後按 Ctrl-CScreenshot: gnome-screenshot -d 5
+#Monitor:
+sudo microcom --port=/dev/ttyACM0 --speed=115200
+#Exit: Ctrl-\ 然後按 Ctrl-C
+```
+```
+#Screenshot:
+gnome-screenshot -d 5
 #(延遲 5 秒後截圖)
 ```
 
