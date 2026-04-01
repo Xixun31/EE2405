@@ -17,7 +17,7 @@ cd labx
 ```
 ln -s ../mbed-os .
 cp ../Document/CMakeLists.txt .
-cp ../Document/mbed_app.json .
+cp ../Document/mbed_app.json5 .
 code main.cpp
 ```
 
@@ -63,7 +63,7 @@ cd labx
 ```
 ln -s ../mbed-os .
 cp ../Document/CMakeLists.txt .
-cp ../Document/mbed_app.json .
+cp ../Document/mbed_app.json5 .
 code main.cpp
 ```
 
