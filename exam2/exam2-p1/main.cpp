@@ -1,8 +1,8 @@
 #include "mbed.h"
 #include "LCD.h"
 
-AnalogOut Aout(D1); // channel A
-AnalogIn Ain(D0); // AWG input
+AnalogOut Aout(D13); // channel A
+AnalogIn Ain(A0); // AWG input
 DigitalOut Dout1(D11); // interupt c1 GPIO pin
 DigitalOut Dout2(D12); // interupt c2 GPIO pin
 DigitalOut Dout3(D13); // interupt c3 GPIO pin
@@ -93,14 +93,14 @@ int main(){
   Dout1 = 1;
   // (2) waveform transit from 0V to 2V (peak)
   while(Ain != 2){ }
-  set_location(char ')');
+  // set_location(char ')');
   display_to_LCD(0x54);
   display_to_LCD(0x32);
   display_to_LCD(0x3A);
   Dout2 = 1;
   // (3) waveform transit from 2V to 0V
   while(Ain != 0){ }
-  set_location(char '0');
+  // set_location(char '0');
   display_to_LCD(0x54);
   display_to_LCD(0x33);
   display_to_LCD(0x3A);
