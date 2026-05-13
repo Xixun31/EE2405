@@ -1,0 +1,13 @@
+/*!
+ * You can write copyrights rules here. These rules will be copied into the outputs.
+ */
+
+//@outputDir("erpc_outputs") // output directory
+
+program acc_gyro; // specify name of output files
+
+interface acc_gyroService // cover functions for same topic
+{
+    GetAccelerometer(out double acce_x, out double acce_y, out double acce_z) -> void
+    GetGyro(out double gyro_x, out double gyro_y, out double gyro_z) -> void
+}
