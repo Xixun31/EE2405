@@ -44,6 +44,12 @@ gnome-screenshot -d 5
 #(延遲 5 秒後截圖)
 ```
 
+### python venv
+```
+source ~/EE2405/venv/bin/activate
+deactivate
+```
+
 ## 🍎 macOS 開發流程 (個人電腦)
 
 ### 更新與初始化專案
@@ -92,4 +98,10 @@ ls /dev/cu.usbmodem*
 ### 使用 minicom 連線 (請根據 ls 結果修改 modem 編號)
 ```
 minicom -D /dev/cu.usbmodem1103 -b 115200
+```
+
+### python venv
+```
+source ~/EE2405/venv/bin/activate
+deactivate
 ```
