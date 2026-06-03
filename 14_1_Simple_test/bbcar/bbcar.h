@@ -14,7 +14,7 @@ class BBCar{
 
 		void controlWheel();
 		void stop();
-		void goStraight( double speed );
+		void goStraight( double speed, double trim);
 
 		// turn left/right with a factor of speed
 		void turn( double speed, double factor );

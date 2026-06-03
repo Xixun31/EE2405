@@ -11,7 +11,7 @@ int main()
 {
    while (1)
    {
-      car.goStraight(50);
+      car.goStraight(50, -4);
       ThisThread::sleep_for(5s);
       car.stop();
       ThisThread::sleep_for(5s);

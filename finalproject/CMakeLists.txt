@@ -9,14 +9,14 @@ cmake_policy(VERSION 3.19)
 ### Block of including .json5 files. Files of this block must be included before the app.cmake
 
 #[[ Set path of mbed_app.json (necessary at all times) ]]
-set(MBED_APP_JSON_PATH mbed_app.json5)
+set(MBED_APP_JSON_PATH mbed_app.json)
 
 ###--------------------------------------------------------------------------------------------------- 
 #[[ This part is dedicated for custom targets only! Settings below activate targets from
     custom_targets.json5 and upload method config, otherwise lines below should be commented. ]]
 
 #[[ Here set path for custom_targets.json5 (this is our default) ]]
-#set(CUSTOM_TARGETS_JSON_PATH custom_targets/custom_targets.json5)
+#set(CUSTOM_TARGETS_JSON_PATH custom_targets/custom_targets.json)
 
 #[[ Here you can set path for custom upload config .cmake (optional example) ]]
 #set(CUSTOM_UPLOAD_CFG_PATH ${CMAKE_SOURCE_DIR}/${MBED_TARGET}/${MBED_TARGET}.cmake)
@@ -51,7 +51,23 @@ add_subdirectory(mbed-os)
 add_subdirectory(pwmin)
 add_subdirectory(bbcar)
 
-
+add_subdirectory(components/wifi-ism43362)
+add_subdirectory(components/paho_mqtt/MQTTPacket)
+add_subdirectory(bsp-b-l475e-iot01)
+add_library(paho_mqtt STATIC
+    ${CMAKE_SOURCE_DIR}/components/paho_mqtt/MQTTPacket/MQTTConnectClient.c
+    ${CMAKE_SOURCE_DIR}/components/paho_mqtt/MQTTPacket/MQTTConnectServer.c
+    ${CMAKE_SOURCE_DIR}/components/paho_mqtt/MQTTPacket/MQTTDeserializePublish.c
+    ${CMAKE_SOURCE_DIR}/components/paho_mqtt/MQTTPacket/MQTTSerializePublish.c
+    ${CMAKE_SOURCE_DIR}/components/paho_mqtt/MQTTPacket/MQTTDeserializePublish.c
+    ${CMAKE_SOURCE_DIR}/components/paho_mqtt/MQTTPacket/MQTTFormat.c
+    ${CMAKE_SOURCE_DIR}/components/paho_mqtt/MQTTPacket/MQTTPacket.c
+    ${CMAKE_SOURCE_DIR}/components/paho_mqtt/MQTTPacket/MQTTSerializePublish.c
+    ${CMAKE_SOURCE_DIR}/components/paho_mqtt/MQTTPacket/MQTTSubscribeClient.c
+    ${CMAKE_SOURCE_DIR}/components/paho_mqtt/MQTTPacket/MQTTSubscribeServer.c
+    ${CMAKE_SOURCE_DIR}/components/paho_mqtt/MQTTPacket/MQTTUnsubscribeClient.c
+    ${CMAKE_SOURCE_DIR}/components/paho_mqtt/MQTTPacket/MQTTUnsubscribeServer.c
+)
 ### End of block
 ######################################################################################################
 
@@ -59,7 +75,7 @@ add_subdirectory(bbcar)
 project(MbedCEHelloWorld)
 
 ### add executable (necessary everytime)
-add_executable(${CMAKE_PROJECT_NAME} main.cpp)
+add_executable(${CMAKE_PROJECT_NAME} main.cpp accelerometer.h)
 
 ######################################################################################################
 ### Link libraries block
@@ -69,9 +85,20 @@ https://github.com/mbed-ce/mbed-os/wiki/MbedOS-configuration#configuration-via-c
 #[[link MbedOS and its libraries (necessary everytime)]]
 target_link_libraries(${CMAKE_PROJECT_NAME}  mbed-os) 
 
+target_include_directories(${CMAKE_PROJECT_NAME} 
+    PRIVATE 
+    	${CMAKE_SOURCE_DIR}
+    	${CMAKE_SOURCE_DIR}/components/paho_mqtt
+        ${CMAKE_SOURCE_DIR}/components/paho_mqtt/MQTTClient
+        ${CMAKE_SOURCE_DIR}/components/paho_mqtt/MQTTClient/mbed
+    	${CMAKE_SOURCE_DIR}/components/paho_mqtt/MQTTPacket
+        ${CMAKE_SOURCE_DIR}/bsp-b-l475e-iot01/Drivers/BSP/B-L475E-IOT01
+        ${CMAKE_SOURCE_DIR}/wifi_mqtt
+)
+
 ### link user library (if needed)
 #target_link_libraries(${CMAKE_PROJECT_NAME} YourLibrary) 
-target_link_libraries(${CMAKE_PROJECT_NAME}  pwmin bbcar)
+target_link_libraries(${CMAKE_PROJECT_NAME}  pwmin bbcar mbed-netsocket mbed-mbedtls paho_mqtt wifi-ism43362 bsp-b-l475e-iot01)
 
 ### End of block
 ######################################################################################################

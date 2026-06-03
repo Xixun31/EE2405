@@ -1,6 +1,10 @@
 #include "mbed.h"
 #include "bbcar.h"
 #include "Pixy2/Pixy2MbedSPI.h"
+#include "MQTTNetwork.h"
+#include "MQTTmbed.h"
+#include "MQTTClient.h"
+#include "accelerometer.h"
 
 Ticker servo_ticker;
 Ticker servo_feedback_ticker;
@@ -25,10 +29,86 @@ enum BarcodeCase {
 
 enum DriveState {
 	FOLLOW_LINE,
-	STOPPED
+	STOPPED,
+    REMOTE_CONTROL
 };
 
 Timer app_timer;
+
+WiFiInterface *wifi;
+Accelerometer* accelerometer_ptr = nullptr;
+Thread mqtt_thread(osPriorityNormal);
+EventQueue mqtt_queue;
+MQTTNetwork* mqtt_network_ptr = nullptr;
+MQTT::Client<MQTTNetwork, Countdown>* mqtt_client_ptr = nullptr;
+
+volatile bool is_remote_control = false;
+volatile float rc_left = 0.0f;
+volatile float rc_right = 0.0f;
+
+void messageArrived(MQTT::MessageData& md) {
+    MQTT::Message &message = md.message;
+    char payload[300];
+    sprintf(payload, "%.*s", message.payloadlen, (char*)message.payload);
+    printf("Received control: %s\r\n", payload);
+    
+    if (strncmp(payload, "cmd:forward", 11) == 0) {
+        is_remote_control = true;
+        rc_left = 45.0f;   // speed=50, trim=-4 => left = -(50 - (-4)) = -54
+        rc_right = 56.0f;  // speed=50, trim=-4 => right = -50 - (-4) = -46
+    } else if (strncmp(payload, "cmd:backward", 12) == 0) {
+        is_remote_control = true;
+        rc_left = -54.0f;    // backward left = 50 + trim (-4) = 54
+        rc_right = -46.0f;   // backward right = 50 - trim (-4) = 46
+    } else if (strncmp(payload, "cmd:left", 8) == 0) {
+        is_remote_control = true;
+        rc_left = 40.0f;    // 原地左轉：左輪後退，右輪前進
+        rc_right = -40.0f;
+    } else if (strncmp(payload, "cmd:right", 9) == 0) {
+        is_remote_control = true;
+        rc_left = -40.0f;   // 原地右轉：左輪前進，右輪後退
+        rc_right = 40.0f;
+    } else if (strncmp(payload, "cmd:stop", 8) == 0) {
+        is_remote_control = true;
+        rc_left = 0.0f;
+        rc_right = 0.0f;
+    } else if (strncmp(payload, "cmd:auto", 8) == 0) {
+        is_remote_control = false;
+    }
+}
+
+void publish_telemetry() {
+    if (!mqtt_client_ptr || !accelerometer_ptr) return;
+    
+    double rawAccelerationData[3] = {0};
+    double calibratedAccelerationData[3] = {0};
+    accelerometer_ptr->GetAcceleromterSensor(rawAccelerationData);
+    accelerometer_ptr->GetAcceleromterCalibratedData(calibratedAccelerationData);
+    
+    // distance = angle * 0.05672
+    float dist_left = car.servo0.angle * 0.05672f;
+    float dist_right = -car.servo1.angle * 0.05672f;
+    float speed = (abs(car.servo0.current_pwm_value) + abs(car.servo1.current_pwm_value)) / 2.0f;
+    
+    char buff[150];
+    sprintf(buff, "{\"x\":%.2f,\"y\":%.2f,\"z\":%.2f,\"dl\":%.2f,\"dr\":%.2f,\"s\":%.2f}",
+            calibratedAccelerationData[0],
+            calibratedAccelerationData[1],
+            calibratedAccelerationData[2],
+            dist_left, dist_right, speed);
+            
+    MQTT::Message message;
+    message.qos = MQTT::QOS0;
+    message.retained = false;
+    message.dup = false;
+    message.payload = (void*) buff;
+    message.payloadlen = strlen(buff) + 1;
+    
+    int rc = mqtt_client_ptr->publish("bbcar/status", message);
+    if (rc != 0) {
+        printf("Publish failed: %d\r\n", rc);
+    }
+}
 
 static uint32_t now_ms()
 {
@@ -66,18 +146,66 @@ static void apply_turn_command(int barcode_code)
 
 int main()
 {
+	accelerometer_ptr = new Accelerometer();
 	parallax_laserping ping1(pin8);
 	app_timer.start();
 
-	// 完美保留你提交的 go_v1 精準尋線與避障參數
+	// 保留 go_v1 尋線參數，並加入 trim=-4.0f 直行修正
 	const float speed_up = 80.0f;
 	const float slow_down = 50.0f;
+	const float trim = -4.0f;
 	const float heading_kp = 1.7f;
 	const float heading_kd = 0.6f;
 	const float heading_deadband = 10.5f;
 	const float wheel_speed_limit = 135.0f;
 	float prev_error = 0.0f;
 	bool has_prev_error = false;
+
+    printf("Connecting to WiFi...\r\n");
+    wifi = WiFiInterface::get_default_instance();
+    if (!wifi) {
+        printf("ERROR: No WiFiInterface found.\r\n");
+    } else {
+        int ret = wifi->connect(MBED_CONF_APP_WIFI_SSID, MBED_CONF_APP_WIFI_PASSWORD, NSAPI_SECURITY_WPA_WPA2);
+        if (ret != 0) {
+            printf("\r\nConnection error: %d\r\n", ret);
+        } else {
+            NetworkInterface* net = wifi;
+            mqtt_network_ptr = new MQTTNetwork(net);
+            mqtt_client_ptr = new MQTT::Client<MQTTNetwork, Countdown>(*mqtt_network_ptr);
+            
+            const char* host = "192.168.1.88";
+            const int port = 1883;
+            printf("Connecting to TCP network at %s...\r\n", host);
+            int rc = mqtt_network_ptr->connect(host, port);
+            if (rc != 0) {
+                printf("\nConnection error: %d\r\n", rc);
+            } else {
+                MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
+                data.MQTTVersion = 3;
+                data.clientID.cstring = (char*)"BBCar";
+                if ((rc = mqtt_client_ptr->connect(data)) != 0){
+                    printf("Fail to connect MQTT\r\n");
+                }
+                if (mqtt_client_ptr->subscribe("bbcar/control", MQTT::QOS0, messageArrived) != 0){
+                    printf("Fail to subscribe\r\n");
+                }
+                
+                mqtt_thread.start(callback(&mqtt_queue, &EventQueue::dispatch_forever));
+                mqtt_queue.call_every(500ms, publish_telemetry);
+                
+                Thread* yield_thread = new Thread(osPriorityNormal);
+                yield_thread->start([&]() {
+                    while(true) {
+                        if (mqtt_client_ptr) {
+                            mqtt_client_ptr->yield(100);
+                        }
+                        ThisThread::sleep_for(100ms);
+                    }
+                });
+            }
+        }
+    }
 
 	printf("Pixy2 init...\r\n");
 	int8_t init_res = pixy.init();
@@ -117,11 +245,17 @@ int main()
 	float dist = 999.0f;
 
 	while (true) {
+        if (is_remote_control) {
+            car.driveLR(rc_left, rc_right);
+            thread_sleep_for(100);
+            continue;
+        }
+
 		// 1. LaserPING 避障處理（最高優先）
 		ping_count++;
 		if (ping_count >= 5) {
 			dist = (float)ping1;
-			printf("LaserPING: %.2f cm\r\n", dist);
+			// printf("LaserPING: %.2f cm\r\n", dist);
 			ping_count = 0;
 		}
 
@@ -209,8 +343,9 @@ int main()
 			base_speed = -slow_down;
 		}
 
-		float left = base_speed + heading_cmd;
-		float right = base_speed - heading_cmd;
+		float direction = (base_speed >= 0) ? 1.0f : -1.0f;
+		float left = base_speed - (trim * direction) + heading_cmd;
+		float right = base_speed + (trim * direction) - heading_cmd;
 		left = car.clamp(left, wheel_speed_limit, -wheel_speed_limit);
 		right = car.clamp(right, wheel_speed_limit, -wheel_speed_limit);
 		car.driveLR(left, right);
