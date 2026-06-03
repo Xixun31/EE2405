@@ -3,7 +3,6 @@ build/
 BUILD/
 cmake-build-debug/
 code-example/
-mbed-os/
 
 # 忽略燒錄用的二進位檔
 *.bin
