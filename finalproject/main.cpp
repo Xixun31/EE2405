@@ -15,12 +15,12 @@ DigitalInOut pin8(D8);
 int main()
 {
 	parallax_laserping ping1(pin8);
-	const float speed_up = 90.0f;
-	const float slow_down = 70.0f;
-	const float heading_kp = 3.2f;
-	const float heading_kd = 1.0f;
-	const float heading_deadband = 8.0f;
-	const float wheel_speed_limit = 190.0f;
+	const float speed_up = 80.0f;
+	const float slow_down = 50.0f;
+	const float heading_kp = 1.7f;
+	const float heading_kd = 0.6f;
+	const float heading_deadband = 10.5f;
+	const float wheel_speed_limit = 135.0f;
 	float prev_error = 0.0f;
 	bool has_prev_error = false;
 
