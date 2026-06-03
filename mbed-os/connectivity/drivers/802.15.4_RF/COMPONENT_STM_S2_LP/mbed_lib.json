@@ -1,0 +1,73 @@
+{
+    "name": "s2lp",
+    "config": {
+        "spi-sdi": {
+            "help": "SPI SDI pin for SPI connection. D11 assumed, needs to be set/overwritten otherwise",
+            "value": null
+        },
+        "spi-sdo": {
+            "help": "SPI SDO pin for SPI connection. D12 assumed, needs to be set/overwritten otherwise",
+            "value": null
+        },
+        "spi-sclk": {
+            "help": "SPI SCLK pin for SPI connection, D13 assumed, needs to be set/overwritten otherwise",
+            "value": null
+        },
+        "spi-cs": {
+            "help": "SPI CS pin for SPI connection, A1 assumed, needs to be set/overwritten otherwise",
+            "value": null
+        },
+        "spi_sdn": {
+            "help": "SPI SDN pin for SPI connection, D7 assumed, needs to be set/overwritten otherwise",
+            "value": null
+        },
+        "test-pin-tx": {
+            "help": "TEST_PIN_TX pin for serial connection, D6 assumed, needs to be set/overwritten otherwise",
+            "value": null
+        },
+        "test-pin-rx": {
+            "help": "TEST_PIN_RX pin for serial connection, D5 assumed, needs to be set/overwritten otherwise",
+            "value": null
+        },
+        "test-pin-csma": {
+            "help": "TEST_PIN_CSMA pin for CSMA, D4 assumed, needs to be set/overwritten otherwise",
+            "value": null
+        },
+        "test-pin-spare-1": {
+            "help": "TEST_PIN_SPARE_1 pin for testing, D2 assumed, needs to be set/overwritten otherwise",
+            "value": null
+        },
+        "stest-pin-spare-2": {
+            "help": "TEST_PIN_SPARE_2 pin for testing, D8 assumed, needs to be set/overwritten otherwise",
+            "value": null
+        },
+        "spi-gpio0": {
+            "help": "SPI GPIO0 pin for GPIO testing, A0 assumed, needs to be set/overwritten otherwise",
+            "value": null
+        },
+        "spi-gpio1": {
+            "help": "SPI GPIO1 pin for GPIO testing, A2 assumed, needs to be set/overwritten otherwise",
+            "value": null
+        },
+        "spi-gpio2": {
+            "help": "SPI GPIO2 pin for GPIO testing, A3 assumed, needs to be set/overwritten otherwise",
+            "value": null
+        },
+        "spi-gpio3": {
+            "help": "SPI GPIO3 pin for GPIO testing, A5 assumed, needs to be set/overwritten otherwise",
+            "value": null
+        },
+        "i2c-sda": {
+            "help": "I2C SDA pin for I2C SDA, null assumed, needs to be set/overwritten otherwise",
+            "value": null
+        },
+        "i2c-scl": {
+            "help": "I2C SCL pin for I2C SCL, null assumed, needs to be set/overwritten otherwise",
+            "value": null
+        },
+        "provide-default": {
+            "help": "Provide default NanostackRfpy. [true/false]",
+            "value": false
+        }
+    }
+}

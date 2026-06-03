@@ -1,0 +1,55 @@
+#
+# Copyright (c) 2020-2021 Arm Limited and Contributors. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+
+import tempfile
+import pathlib
+import json
+
+from unittest import TestCase
+
+from click.testing import CliRunner
+
+from mbed_tools.cli.configure import configure
+
+target_json = json.dumps(
+    {
+        "TARGET": {
+            "core": None,
+            "extra_labels": [],
+            "supported_form_factors": [],
+            "components": [],
+            "macros": [],
+            "device_has": [],
+            "features": [],
+            "c_lib": "std",
+            "printf_lib": "minimal-printf",
+            "supported_c_libs": {"gcc_arm": ["std", "small"]},
+        }
+    }
+)
+
+mbed_app_json = json.dumps(
+    {"target_overrides": {"*": {"target.c_lib": "small", "target.printf_lib": "minimal-printf"}}}
+)
+
+
+class TestConfigureRegression(TestCase):
+    def test_generate_config_called_with_correct_arguments(self):
+        with tempfile.TemporaryDirectory() as tmpDir:
+            tmpDirPath = pathlib.Path(tmpDir)
+            pathlib.Path(tmpDirPath / "mbed-os.lib").write_text("https://github.com/ARMmbed/mbed-os")
+            pathlib.Path(tmpDirPath / "mbed_app.json").write_text(mbed_app_json)
+            pathlib.Path(tmpDirPath / "mbed-os").mkdir()
+            pathlib.Path(tmpDirPath / "mbed-os" / "targets").mkdir()
+            pathlib.Path(tmpDirPath / "mbed-os" / "targets" / "targets.json5").write_text(target_json)
+            pathlib.Path(tmpDirPath / "mbed-os" / "targets" / "cmsis_mcu_descriptions.json5").write_text("{}")
+            pathlib.Path(tmpDirPath / "cmake-build-debug").mkdir()
+
+            result = CliRunner().invoke(
+                configure,
+                ["-m", "Target", "-t", "gcc_arm", "-p", tmpDir, "-o", str(tmpDirPath / "cmake-build-debug")],
+                catch_exceptions=False,
+            )
+            self.assertIn("mbed_config.cmake has been generated and written to", result.output)

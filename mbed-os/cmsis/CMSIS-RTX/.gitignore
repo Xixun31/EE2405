@@ -1,0 +1,15 @@
+*.bak
+Documentation/html
+Documentation/Doxygen/rtx.dxy
+Documentation/Doxygen/*.tag
+Documentation/Doxygen/src/history.txt
+build
+output
+**.DS_STORE
+*.tar.bz2
+*.lib
+*.a
+.clangd
+
+# Output of the linkchecker tool
+linkchecker-out.csv

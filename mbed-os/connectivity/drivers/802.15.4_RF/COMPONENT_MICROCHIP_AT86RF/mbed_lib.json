@@ -1,0 +1,102 @@
+{
+    "name": "atmel-rf",
+    "config": {
+        "spi-mosi": {
+            "help": "SPI MOSI pin configured for SPI connection.",
+            "value": null
+        },
+        "spi-miso": {
+            "help": "SPI MISO pin configured for SPI connection.",
+            "value": null
+        },
+        "spi-sclk": {
+            "help": "SPI SCLK pin configured for SPI connection.",
+            "value": null
+        },
+        "spi-cs": {
+            "help": "SPI CS pin configured for SPI connection.",
+            "value": null
+        },
+        "spi-rst": {
+            "help": "SPI RST pin configured for SPI connection.",
+            "value": null
+        },
+        "spi-slp": {
+            "help": "SPI SLP pin configured for SPI connection.",
+            "value": null
+        },
+        "spi-irq": {
+            "help": "SPI IRQ pin configured for SPI connection.",
+            "value": null
+        },
+        "i2c-sda": {
+            "help": "I2C SDA pin configured for I2C connection.",
+            "value": null
+        },
+        "i2c-scl": {
+            "help": "I2C SCL pin configured for I2C connection.",
+            "value": null
+        },
+        "test-pin-tx": {
+            "help": "TEST_PIN_TX pin configured for TX.",
+            "value": null
+        },
+        "test-pin-rx": {
+            "help": "TEST_PIN_RX pin configured for RX.",
+            "value": null
+        },
+        "test-pin-csma": {
+            "help": "TEST_PIN_CSMA pin configured for CSMA.",
+            "value": null
+        },
+        "test-pin-spare-1": {
+            "help": "TEST_PIN_SPARE_1.",
+            "value": null
+        },
+        "test-pin-spare-2": {
+            "help": "TEST_PIN_SPARE_2.",
+            "value": null
+        },
+        "se2435l-csd": {
+            "help": "SE2435L CSD pin configuration.",
+            "value": null
+        },
+        "se2435l-ant-sel": {
+            "help": "SE2435L ANT_SEL pin confuguration.",
+            "value": null
+        },
+        "full-spi-speed": {
+            "help": "Maximum SPI clock speed (Hz), as long as sufficient inter-byte spacing",
+            "value": 7500000
+        },
+        "full-spi-speed-byte-spacing": {
+            "help": "Required byte spacing in nanoseconds if full SPI speed is in use",
+            "value": 250
+        },
+        "low-spi-speed": {
+            "help": "Maximum SPI clock speed (Hz) if no inter-byte spacing",
+            "value": 3750000
+        },
+        "use-spi-spacing-api": {
+            "help": "Use SPI spacing API proposed in https://github.com/ARMmbed/mbed-os/pull/5353 to ensure spacing between bytes - either run at full speed with spacing, or low with no spacing",
+            "value": false
+        },
+        "assume-spaced-spi":  {
+            "help": "If not using SPI spacing API, assume platform has widely-spaced bytes in bursts, so use full clock speed rather than low.",
+            "value": false
+        },
+        "provide-default": {
+            "help": "Provide default NanostackRfpy. [true/false]",
+            "value": false
+        },
+        "irq-thread-stack-size":  {
+            "help": "The stack size of the Thread serving the Atmel RF interrupts",
+            "value": 1024
+        }
+    },
+    "target_overrides": {
+        "STM": {
+            "assume-spaced-spi": true
+        }
+    }
+}

@@ -1,0 +1,81 @@
+{
+    "name": "spif-driver",
+    "config": {
+        "spi-mosi": "SPI_MOSI",
+        "spi-miso": "SPI_MISO",
+        "spi-clk":  "SPI_SCK",
+        "spi-cs":   "SPI_CS",
+        "spi-freq": "40000000",
+        "debug": {
+            "help": "Enable debug logs. [0/1]",
+            "accepted_values" : [0, 1],
+            "value": 0
+        }
+    },
+    "target_overrides": {
+        "HANI_IOT": {
+            "spi-mosi": "P0_26",
+            "spi-miso": "P1_3",
+            "spi-clk":  "P1_2",
+            "spi-cs":   "P0_20"
+        },
+        "LPC54114": {
+            "spi-mosi": "P0_20",
+            "spi-miso": "P0_18",
+            "spi-clk":  "P0_19",
+            "spi-cs":   "P1_2"
+        },
+        "NRF52840_DK": {
+            "spi-mosi": "p20",
+            "spi-miso": "p21",
+            "spi-clk":  "p19",
+            "spi-cs":   "p17"
+        },
+        "HEXIWEAR": {
+             "spi-mosi": "PTD6",
+             "spi-miso": "PTD7",
+             "spi-clk":  "PTD5",
+             "spi-cs":   "PTD4"
+        },
+       "WIO_EMW3166": {
+             "spi-mosi": "PB_15",
+             "spi-miso": "PB_14",
+             "spi-clk":  "PB_13",
+             "spi-cs":   "PA_10"
+       },
+       "ADV_WISE_1570": {
+             "spi-mosi": "PA_7",
+             "spi-miso": "PA_6",
+             "spi-clk":  "PA_5",
+             "spi-cs":   "PB_12",
+             "spi-freq": "20000000"
+       },
+       "UHURU_RAVEN": {
+             "spi-mosi": "PE_14",
+             "spi-miso": "PE_13",
+             "spi-clk":  "PE_12",
+             "spi-cs":   "PE_11"
+       },
+       "MTS_DRAGONFLY_F411RE": {
+           "spi-mosi": "SPI3_MOSI",
+           "spi-miso": "SPI3_MISO",
+           "spi-clk":  "SPI3_SCK",
+           "spi-cs":   "SPI_CS1"
+       },
+       "MTS_DRAGONFLY_F413RH": {
+           "spi-mosi": "SPI3_MOSI",
+           "spi-miso": "SPI3_MISO",
+           "spi-clk":  "SPI3_SCK",
+           "spi-cs":   "SPI_CS1"
+       },
+       "ARDUINO_NICLA_SENSE_ME": {
+          "spi-cs":   "CS_FLASH"
+       },
+       "NUMAKER_PFM_M487": {
+           "spi-mosi": "PC_0",
+           "spi-miso": "PC_1",
+           "spi-clk":  "PC_2",
+           "spi-cs":   "PC_3"
+      }
+    }
+}
