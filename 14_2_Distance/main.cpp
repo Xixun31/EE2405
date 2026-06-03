@@ -7,16 +7,25 @@ PwmIn servo0_f(D9), servo1_f(D10);
 PwmOut servo0_c(D11), servo1_c(D12);
 BBCar car(servo0_c, servo0_f, servo1_c, servo1_f, servo_ticker, servo_feedback_ticker);
 
+DigitalInOut pin8(D8);
+
 int main() {
-   while(1){
-      car.goCertainDistance(61.2);   //6.5*3.14*3
+   parallax_laserping  ping1(pin8);
+   // while(1){
+      // 印出行走前的 LaserPing 值
+      printf("ping before: %.2f cm\n", (float)ping1);
+
+      car.goCertainDistance(-20.4);   //6.5*3.14*3
 
       while(car.checkDistance(1)){
          ThisThread::sleep_for(500ms);
       }
       car.stop();
 
+      // 印出行走後的 LaserPing 值
+      printf("ping after: %.2f cm\n", (float)ping1);
+
       ThisThread::sleep_for(3s);
       printf("error distance = %f\n", (car.servo0.targetAngle - car.servo0.angle)*6.5*3.14/360);
-   }
+   // }
 }
