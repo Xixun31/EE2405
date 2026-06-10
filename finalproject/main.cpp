@@ -154,8 +154,8 @@ int main()
 	const float speed_up = 75.0f;
 	const float slow_down = 30.0f;
 	const float trim = -4.0f;
-	const float heading_kp = 1.7f;
-	const float heading_kd = 0.6f;
+	const float heading_kp = 1.0f;    // 降低 P 值 (原本 1.7)，減少左右擺動
+	const float heading_kd = 0.8f;    // 提高 D 值 (原本 0.6)，增加阻尼效果使直行更穩定
 	const float heading_deadband = 10.0f;
 	const float wheel_speed_limit = 125.0f;
 	float prev_error = 0.0f;
@@ -253,7 +253,7 @@ int main()
 		ping_count++;
 		if (ping_count >= 5) {
 			dist = (float)ping1;
-			// printf("LaserPING: %.2f cm\r\n", dist);
+			printf("LaserPING: %.2f cm\r\n", dist);
 			ping_count = 0;
 		}
 
@@ -296,13 +296,15 @@ int main()
 					if (barcode_code == BARCODE_LEFT) {
 						printf("Execute Left Turn: Spin Left & Detect Line\r\n");
 						car.driveLR(-45.0f, 45.0f);   // Spin Left
+						ThisThread::sleep_for(1800ms);
 					} else {
 						printf("Execute Right Turn: Spin Right & Detect Line\r\n");
 						car.driveLR(45.0f, -45.0f);   // Spin Right
+						ThisThread::sleep_for(1000ms);
 					}
 
-					// 3. 強制旋轉 2300ms 的盲區以避開舊線
-					ThisThread::sleep_for(1300ms);
+					// 3. 強制旋轉 1000ms 的盲區以避開舊線
+					// ThisThread::sleep_for(1000ms);
 
 					// 4. 尋線偵測迴圈 (最大時限為 2600ms)
 					uint32_t start_spin = now_ms();
