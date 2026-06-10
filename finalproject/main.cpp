@@ -152,7 +152,7 @@ int main()
 
 	// 保留 go_v1 尋線參數，並加入 trim=-4.0f 直行修正
 	const float speed_up = 75.0f;
-	const float slow_down = 50.0f;
+	const float slow_down = 30.0f;
 	const float trim = -4.0f;
 	const float heading_kp = 1.7f;
 	const float heading_kd = 0.6f;
