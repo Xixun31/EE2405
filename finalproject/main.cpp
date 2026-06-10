@@ -22,9 +22,9 @@ static const uint32_t kPendingTurnTimeoutMs = 2500;
 
 enum BarcodeCase {
 	BARCODE_NONE = -1,
-	BARCODE_LEFT = 0,
-	BARCODE_STOP = 1,
-	BARCODE_RIGHT = 2,
+	BARCODE_LEFT = 2,
+	BARCODE_STOP = 3,
+	BARCODE_RIGHT = 1,
 };
 
 enum DriveState {
@@ -118,8 +118,8 @@ static uint32_t now_ms()
 static const char *barcode_to_text(int code)
 {
 	switch (code) {
-		case BARCODE_LEFT: return "Barcode 0: Turn Left";
-		case BARCODE_STOP: return "Barcode 1: Stop";
+		case BARCODE_LEFT: return "Barcode 1: Turn Left";
+		case BARCODE_STOP: return "Barcode 3: Stop";
 		case BARCODE_RIGHT: return "Barcode 2: Turn Right";
 		default: return "No Barcode";
 	}
@@ -237,8 +237,6 @@ int main()
 	uint32_t last_barcode_seen_ms = 0;
 	bool barcode_armed = true;
 
-	int pending_turn_code = BARCODE_NONE;
-	uint32_t pending_turn_set_ms = 0;
 	bool prev_intersection_seen = false;
 
 	int ping_count = 0;
@@ -288,9 +286,53 @@ int main()
 					printf("STOPPED by barcode\r\n");
 				} else if (barcode_armed && (barcode_code == BARCODE_LEFT || barcode_code == BARCODE_RIGHT)) {
 					apply_turn_command(barcode_code);
-					pending_turn_code = barcode_code;
-					pending_turn_set_ms = now;
+					printf("Execute Immediate Turn\r\n");
+					
+					// 1. 稍微直行一小段離開條碼，避免卡在條碼上
+					car.driveLR(45.0f, 56.0f);   // speed=50, trim=-4 => Forward
+					ThisThread::sleep_for(1500ms);
+
+					// 2. 原地旋轉
+					if (barcode_code == BARCODE_LEFT) {
+						printf("Execute Left Turn: Spin Left & Detect Line\r\n");
+						car.driveLR(-45.0f, 45.0f);   // Spin Left
+					} else {
+						printf("Execute Right Turn: Spin Right & Detect Line\r\n");
+						car.driveLR(45.0f, -45.0f);   // Spin Right
+					}
+
+					// 3. 強制旋轉 2300ms 的盲區以避開舊線
+					ThisThread::sleep_for(1300ms);
+
+					// 4. 尋線偵測迴圈 (最大時限為 2600ms)
+					uint32_t start_spin = now_ms();
+					bool line_found = false;
+					while ((now_ms() - start_spin) < 2600) {
+						int8_t feat = pixy.line.getMainFeatures(LINE_VECTOR);
+						if (feat >= 0 && (feat & LINE_VECTOR) && pixy.line.numVectors > 0) {
+							line_found = true;
+							printf("Detected line during turn, early exiting spin!\r\n");
+							break;
+						}
+						ThisThread::sleep_for(20ms);
+					}
+
+					// 5. 結束旋轉
+					car.stop();
+
+					// 6. 若超時未偵測到線，則保留原本的安全直行機制
+					if (!line_found) {
+						printf("Turn timeout without line detected, applying fallback forward.\r\n");
+						car.driveLR(45.0f, 56.0f);   // speed=50, trim=-4 => Forward
+						ThisThread::sleep_for(750ms);
+						car.stop();
+					}
+
 					barcode_armed = false;
+					last_barcode_code = barcode_code;
+					last_barcode_seen_ms = now_ms();
+					has_prev_error = false;
+					continue; // 轉完後重新開始新一輪主迴圈，避免干擾
 				}
 
 				last_barcode_code = barcode_code;
@@ -309,7 +351,32 @@ int main()
 
 		// 5. 尋線向量檢測與控制
 		if (!(feat_res & LINE_VECTOR) || pixy.line.numVectors == 0) {
-			car.stop();
+			static uint32_t line_lost_ms = 0;
+			static float last_heading_cmd = 0.0f;
+			
+			if (has_prev_error) { // 剛失去線的瞬間，紀錄當時的誤差與轉向動力
+				line_lost_ms = now_ms();
+				last_heading_cmd = heading_kp * prev_error;
+			}
+			
+			if (now_ms() - line_lost_ms < 1000) { // 給予 1 秒的找線寬容期
+				if (abs(last_heading_cmd) > 10.0f) {
+					// 如果失去線的瞬間誤差很大，代表正在轉彎（例如 U-turn 或急彎）
+					// 此時維持原本的轉向動力繼續旋轉尋線
+					float left = speed_up - (trim * 1.0f) + last_heading_cmd;
+					float right = speed_up + (trim * 1.0f) - last_heading_cmd;
+					left = car.clamp(left, wheel_speed_limit, -wheel_speed_limit);
+					right = car.clamp(right, wheel_speed_limit, -wheel_speed_limit);
+					car.driveLR(left, right);
+				} else {
+					// 誤差小代表本來是直行，則用低速直行盲走
+					car.driveLR(35.0f, 43.0f); 
+				}
+			} else {
+				// 失去太久才停車
+				car.stop();
+			}
+			
 			has_prev_error = false;
 			thread_sleep_for(10);
 			continue;
@@ -357,54 +424,6 @@ int main()
 
 		if (intersection_seen && !prev_intersection_seen) {
 			printf("Intersection detected\r\n");
-			if (pending_turn_code == BARCODE_LEFT || pending_turn_code == BARCODE_RIGHT) {
-				// 1. 直行 1.75s 進入路口中心
-				car.driveLR(45.0f, 56.0f);   // speed=50, trim=-4 => Forward
-				ThisThread::sleep_for(1750ms);
-
-				// 2. 原地旋轉
-				if (pending_turn_code == BARCODE_LEFT) {
-					printf("Execute Left Turn: Spin Left & Detect Line\r\n");
-					car.driveLR(-45.0f, 45.0f);   // Spin Left
-				} else {
-					printf("Execute Right Turn: Spin Right & Detect Line\r\n");
-					car.driveLR(45.0f, -45.0f);   // Spin Right
-				}
-
-				// 3. 強制旋轉 2300ms 的盲區以避開舊線
-				ThisThread::sleep_for(2300ms);
-
-				// 4. 尋線偵測迴圈 (最大時限為 2600ms)
-				uint32_t start_spin = now_ms();
-				bool line_found = false;
-				while ((now_ms() - start_spin) < 2600) {
-					int8_t feat = pixy.line.getMainFeatures(LINE_VECTOR);
-					if (feat >= 0 && (feat & LINE_VECTOR) && pixy.line.numVectors > 0) {
-						line_found = true;
-						printf("Detected line during turn, early exiting spin!\r\n");
-						break;
-					}
-					ThisThread::sleep_for(20ms);
-				}
-
-				// 5. 結束旋轉
-				car.stop();
-
-				// 6. 若超時未偵測到線，則保留原本的安全直行機制
-				if (!line_found) {
-					printf("Turn timeout without line detected, applying fallback forward.\r\n");
-					car.driveLR(45.0f, 56.0f);   // speed=50, trim=-4 => Forward
-					ThisThread::sleep_for(750ms);
-					car.stop();
-				}
-			}
-			pending_turn_code = BARCODE_NONE;
-		}
-
-		// 7. 轉向指令超時清除
-		if (pending_turn_code != BARCODE_NONE &&
-			(now - pending_turn_set_ms) > kPendingTurnTimeoutMs) {
-			pending_turn_code = BARCODE_NONE;
 		}
 
 		prev_intersection_seen = intersection_seen;
